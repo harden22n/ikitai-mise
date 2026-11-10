@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>行きたい店リスト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --ink:#20304A; --muted:#5F6B7E;
+  --line:#D5DDD8; --accent:#E2A52B; --accent-ink:#2A1E05; --done:#3F8A6B; --danger:#B4423A;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A24; --surface:#1E2634; --ink:#E8ECF2; --muted:#9AA5B6;
+    --line:#2E3849; --accent:#F0B640; --accent-ink:#241900; --done:#5DB38E; --danger:#E0716A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A24; --surface:#1E2634; --ink:#E8ECF2; --muted:#9AA5B6;
+  --line:#2E3849; --accent:#F0B640; --accent-ink:#241900; --done:#5DB38E; --danger:#E0716A;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  font-size:16px;line-height:1.6;
+}
+.wrap{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:30px;font-weight:800;letter-spacing:.02em;margin:8px 0 2px;line-height:1.25}
+.sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+
+/* 追加フォーム */
+.add{background:var(--ink);color:var(--bg);border-radius:22px;padding:18px 16px 16px}
+.add h2{font-size:17px;margin:0 0 10px}
+.add textarea{
+  width:100%;min-height:72px;border:none;border-radius:14px;padding:12px;
+  font:inherit;font-size:15px;resize:vertical;background:var(--bg);color:var(--ink);
+}
+.add .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.add label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px;opacity:.85}
+.add input[type=text]{
+  width:100%;border:none;border-radius:12px;padding:11px 12px;font:inherit;font-size:16px;
+  background:var(--bg);color:var(--ink);
+}
+.hint{font-size:13px;margin:6px 0 0;opacity:.8}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  border:1.5px solid currentColor;background:transparent;color:inherit;border-radius:999px;
+  padding:6px 13px;font:inherit;font-size:14px;cursor:pointer;opacity:.75;
+}
+.chip.more{border-style:dashed}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);opacity:1;font-weight:700}
+.btn{
+  border:none;border-radius:14px;padding:12px 16px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;
+}
+.btn-main{background:var(--accent);color:var(--accent-ink);width:100%;margin-top:16px;font-size:17px;padding:14px}
+.btn-sub{background:transparent;color:inherit;border:1.5px solid currentColor;opacity:.85;font-size:14px;padding:8px 12px}
+.btn:disabled{opacity:.4;cursor:default}
+.formbtns{display:flex;gap:8px}
+.formbtns .btn-main{flex:1}
+.formbtns .cancel{margin-top:16px}
+
+/* 一覧 */
+.tabs{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px;margin:28px 0 12px}
+.tab{flex:1;border:none;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:9px 0;border-radius:12px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.filters{margin:0 0 14px}
+.filters .chips{color:var(--ink)}
+.filters .flabel{font-size:12px;color:var(--muted);margin:8px 0 5px}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.shop{
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;
+  display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start;
+}
+.check{
+  width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:transparent;
+  cursor:pointer;margin-top:2px;display:grid;place-items:center;color:transparent;font-size:16px;font-weight:800;
+}
+.shop.went .check{background:var(--done);border-color:var(--done);color:#fff}
+.shop.went .name{color:var(--muted)}
+.name{font-weight:800;font-size:17px;line-height:1.4;word-break:break-word}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:12.5px;background:var(--bg);border-radius:8px;padding:2px 8px;color:var(--muted)}
+.actions{grid-column:2;display:flex;gap:14px;margin-top:8px;font-size:14px}
+.actions a,.actions button{color:var(--ink);background:none;border:none;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.actions .del{color:var(--danger)}
+.empty{text-align:center;color:var(--muted);padding:28px 10px;border:1.5px dashed var(--line);border-radius:18px}
+.backup{display:flex;gap:8px;justify-content:center;margin-top:10px;color:var(--muted)}
+.status{font-size:12.5px;color:var(--muted);text-align:center;margin-top:24px}
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.formmsg{margin:10px 0 0;font-size:14px;font-weight:700;min-height:1.4em}
+.formmsg.bad{color:#FFB4AE}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#20304A">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<div class="wrap">
+  <h1>行きたい店リスト</h1>
+  <p class="sub">気になったお店をためておく場所</p>
+
+  <section class="add" id="form">
+    <h2 id="formTitle">お店を追加</h2>
+    <label for="name" style="margin-top:0">店名</label>
+    <input type="text" id="name" placeholder="お店の名前（マイクで話して入れてもOK）" autocomplete="off">
+
+    <label>エリア</label>
+    <div class="chips" id="areaChips"></div>
+    <input type="text" id="areaOther" placeholder="ほかのエリアを入力" style="margin-top:8px" autocomplete="off">
+
+    <label>予算（ひとり）</label>
+    <div class="chips" id="budgetChips"></div>
+
+    <div class="formbtns">
+      <button class="btn btn-sub cancel" id="cancelBtn" type="button" hidden>やめる</button>
+      <button class="btn btn-main" id="saveBtn" type="button">リストに追加</button>
+    </div>
+    <p class="formmsg" id="formMsg" role="status" aria-live="polite"></p>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="todo" aria-selected="true">まだ</button>
+    <button class="tab" role="tab" data-tab="went" aria-selected="false">行った</button>
+    <button class="tab" role="tab" data-tab="all" aria-selected="false">すべて</button>
+  </div>
+
+  <div class="filters" id="filters"></div>
+  <ul class="list" id="list"></ul>
+  <p class="status" id="status">読み込み中…</p>
+  <div class="backup">
+    <button class="btn btn-sub" id="exportBtn" type="button">バックアップを保存</button>
+    <button class="btn btn-sub" id="importBtn" type="button">バックアップから戻す</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PRESET_AREAS = [
+  "札幌駅","大通","すすきの","狸小路","円山","中島公園",
+  "北２４条","麻生","新琴似","元町","苗穂",
+  "宮の森","琴似","発寒","手稲",
+  "菊水","白石","南郷","新札幌",
+  "平岸","澄川","真駒内","月寒","福住","清田","定山渓",
+  "小樽","江別","北広島","千歳"
+];
+const AREA_FIRST = 6;
+let showAllAreas = false;
+const BUDGETS = ["〜1,000円","〜2,000円","〜3,000円","〜5,000円","5,000円〜"];
+const $ = s => document.querySelector(s);
+
+let shops = [];
+let tab = "todo";
+let filterArea = null, filterBudget = null;
+let selArea = null, selBudget = null, parsedUrl = "";
+let editingId = null;
+let confirmDelId = null;
+
+/* ---------- 保存（このスマホの中） ---------- */
+const LKEY = "ikitai-mise-v1";
+const SEED = [{"addedAt":1794322373655,"area":"大通","budget":"5,000円〜","id":"mwat7od3iu00","name":"めんめ","url":"","went":false}];
+let lastErr = "";
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LKEY);
+    if(raw === null){ localStorage.setItem(LKEY, JSON.stringify(SEED)); return SEED.slice(); }
+    const v = JSON.parse(raw); return Array.isArray(v) ? v : [];
+  }catch(e){ return []; }
+}
+function persist(){
+  try{ localStorage.setItem(LKEY, JSON.stringify(shops)); return Promise.resolve(true); }
+  catch(e){ lastErr = (e && e.name) || String(e); toast("保存できませんでした"); return Promise.resolve(false); }
+}
+function setMsg(text, bad){
+  const m = $("#formMsg"); m.textContent = text; m.classList.toggle("bad", !!bad);
+}
+function init(){
+  shops = loadLocal();
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  $("#status").textContent = "このスマホの中に保存されます";
+  render();
+}
+
+/* ---------- バックアップ ---------- */
+$("#exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify({app:"ikitai-mise", version:1, items:shops}, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  const d = new Date(); const pad=n=>String(n).padStart(2,"0");
+  a.href = URL.createObjectURL(blob);
+  a.download = "行きたい店_" + d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  toast("バックアップを保存しました");
+});
+$("#importBtn").addEventListener("click", ()=>$("#importFile").click());
+$("#importFile").addEventListener("change", async e=>{
+  const f = e.target.files[0]; e.target.value = "";
+  if(!f) return;
+  try{
+    const v = JSON.parse(await f.text());
+    const items = Array.isArray(v) ? v : v.items;
+    if(!Array.isArray(items)) throw new Error("形式が違います");
+    const add = items.filter(x=>x && x.id && x.name && !shops.some(s=>s.id===x.id));
+    shops = add.concat(shops);
+    await persist(); render();
+    toast(add.length + "件を読み込みました");
+  }catch(err){ toast("読み込めませんでした"); }
+});
+
+$("#name").addEventListener("input", updateSave);
+
+/* ---------- チップ ---------- */
+function knownAreas(){
+  const set = new Set(PRESET_AREAS);
+  shops.forEach(s=>{ if(s.area) set.add(s.area); });
+  return [...set];
+}
+function makeChips(el, items, current, onPick){
+  el.innerHTML = "";
+  items.forEach(v=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip"; b.textContent=v;
+    b.setAttribute("aria-pressed", v===current ? "true":"false");
+    b.addEventListener("click", ()=>onPick(v===current ? null : v));
+    el.appendChild(b);
+  });
+}
+function renderFormChips(){
+  const all = knownAreas();
+  let shown = showAllAreas ? all : all.slice(0, AREA_FIRST);
+  if(selArea && !shown.includes(selArea)) shown = shown.concat(selArea);
+  makeChips($("#areaChips"), shown, selArea, v=>{ selArea=v; $("#areaOther").value=""; renderFormChips(); });
+  if(all.length > AREA_FIRST){
+    const more=document.createElement("button"); more.type="button"; more.className="chip more";
+    more.textContent = showAllAreas ? "閉じる" : "もっと見る（あと"+(all.length-AREA_FIRST)+"）";
+    more.addEventListener("click", ()=>{ showAllAreas=!showAllAreas; renderFormChips(); });
+    $("#areaChips").appendChild(more);
+  }
+  makeChips($("#budgetChips"), BUDGETS, selBudget, v=>{ selBudget=v; renderFormChips(); });
+}
+$("#areaOther").addEventListener("input", e=>{
+  if(e.target.value.trim()){ selArea=null; renderFormChips(); }
+});
+
+function updateSave(){ $("#saveBtn").disabled = false; }
+
+/* ---------- 追加・編集 ---------- */
+$("#saveBtn").addEventListener("click", ()=>{
+ try{
+  const name = $("#name").value.trim();
+  if(!name){ setMsg("店名を入れてね", true); $("#name").focus(); return; }
+  setMsg("保存中…");
+  const area = $("#areaOther").value.trim() || selArea || "";
+  if(editingId){
+    const s = shops.find(x=>x.id===editingId);
+    if(s){
+      s.name=name; s.area=area; s.budget=selBudget||"";
+      if(parsedUrl) s.url=parsedUrl;
+    }
+    toast("変更を保存しました");
+  } else {
+    shops.unshift({
+      id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      name, area, budget: selBudget||"", url: parsedUrl, went:false, addedAt: Date.now()
+    });
+    toast("リストに追加しました");
+    tab = "todo";
+    filterArea = null; filterBudget = null;
+  }
+  const p = persist();
+  resetForm();
+  render();
+  p.then(ok=>setMsg(ok ? "✓ 保存しました" : "保存できませんでした（"+lastErr+"）。もう一度押してね", !ok));
+ }catch(e){
+  setMsg("エラー：" + ((e && e.message) || e), true);
+ }
+});
+$("#cancelBtn").addEventListener("click", ()=>{ resetForm(); });
+
+function resetForm(){
+  editingId=null; selArea=null; selBudget=null; parsedUrl="";
+  $("#name").value=""; $("#areaOther").value="";
+  $("#formTitle").textContent="お店を追加"; $("#saveBtn").textContent="リストに追加";
+  $("#cancelBtn").hidden=true;
+  renderFormChips(); updateSave();
+}
+
+function startEdit(s){
+  editingId=s.id; parsedUrl=s.url||"";
+  $("#name").value=s.name;
+  if(knownAreas().includes(s.area)){ selArea=s.area; $("#areaOther").value=""; }
+  else { selArea=null; $("#areaOther").value=s.area||""; }
+  selBudget = s.budget||null;
+  $("#formTitle").textContent="お店を編集"; $("#saveBtn").textContent="変更を保存";
+  $("#cancelBtn").hidden=false;
+  renderFormChips(); updateSave();
+  $("#form").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth"});
+}
+
+/* ---------- 一覧 ---------- */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{ tab=t.dataset.tab; render(); });
+});
+
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.dataset.tab===tab ? "true":"false"));
+  renderFormChips();
+
+  // 絞り込み
+  const f = $("#filters"); f.innerHTML="";
+  const areasInList = [...new Set(shops.map(s=>s.area).filter(Boolean))];
+  const budgetsInList = BUDGETS.filter(b=>shops.some(s=>s.budget===b));
+  if(filterArea && !areasInList.includes(filterArea)) filterArea=null;
+  if(filterBudget && !budgetsInList.includes(filterBudget)) filterBudget=null;
+  if(areasInList.length>1){
+    const l=document.createElement("div"); l.className="flabel"; l.textContent="エリアでしぼる"; f.appendChild(l);
+    const c=document.createElement("div"); c.className="chips"; f.appendChild(c);
+    makeChips(c, areasInList, filterArea, v=>{ filterArea=v; render(); });
+  }
+  if(budgetsInList.length>1){
+    const l=document.createElement("div"); l.className="flabel"; l.textContent="予算でしぼる"; f.appendChild(l);
+    const c=document.createElement("div"); c.className="chips"; f.appendChild(c);
+    makeChips(c, budgetsInList, filterBudget, v=>{ filterBudget=v; render(); });
+  }
+
+  let items = shops.filter(s=> tab==="all" ? true : tab==="went" ? s.went : !s.went);
+  if(filterArea) items = items.filter(s=>s.area===filterArea);
+  if(filterBudget) items = items.filter(s=>s.budget===filterBudget);
+
+  const list = $("#list"); list.innerHTML="";
+  if(!items.length){
+    const li=document.createElement("li"); li.className="empty";
+    li.textContent = shops.length===0 ? "まだお店がありません。上で店名を入れて追加しよう"
+      : tab==="went" ? "行ったお店はまだありません" : "この条件のお店はありません";
+    list.appendChild(li); return;
+  }
+  items.forEach(s=>{
+    const li=document.createElement("li"); li.className="shop"+(s.went?" went":"");
+    const chk=document.createElement("button"); chk.className="check"; chk.type="button";
+    chk.textContent="✓"; chk.setAttribute("aria-label", s.went ? "「まだ」に戻す" : "行ったにする");
+    chk.addEventListener("click", ()=>{
+      s.went=!s.went; persist(); render();
+      toast(s.went ? "行ったにしました" : "「まだ」に戻しました");
+    });
+    const body=document.createElement("div");
+    const nm=document.createElement("div"); nm.className="name"; nm.textContent=s.name; body.appendChild(nm);
+    const meta=document.createElement("div"); meta.className="meta";
+    if(s.area){ const t=document.createElement("span"); t.className="tag"; t.textContent=s.area; meta.appendChild(t); }
+    if(s.budget){ const t=document.createElement("span"); t.className="tag"; t.textContent=s.budget; meta.appendChild(t); }
+    if(meta.children.length) body.appendChild(meta);
+    const act=document.createElement("div"); act.className="actions";
+    {
+      const q = s.name + " " + (s.area || "札幌");
+      const a=document.createElement("a");
+      a.href = s.url || ("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q));
+      a.target="_blank"; a.rel="noopener"; a.textContent="地図で開く"; act.appendChild(a);
+    }
+    const ed=document.createElement("button"); ed.type="button"; ed.textContent="編集"; ed.addEventListener("click", ()=>startEdit(s)); act.appendChild(ed);
+    if(confirmDelId===s.id){
+      const q=document.createElement("span"); q.textContent="本当に削除？"; q.style.fontWeight="700";
+      const yes=document.createElement("button"); yes.type="button"; yes.className="del"; yes.textContent="削除する";
+      yes.addEventListener("click", ()=>{
+        shops = shops.filter(x=>x.id!==s.id);
+        confirmDelId=null;
+        if(editingId===s.id) resetForm();
+        persist(); render(); toast("削除しました");
+      });
+      const no=document.createElement("button"); no.type="button"; no.textContent="やめる";
+      no.addEventListener("click", ()=>{ confirmDelId=null; render(); });
+      act.appendChild(q); act.appendChild(yes); act.appendChild(no);
+    } else {
+      const del=document.createElement("button"); del.type="button"; del.className="del"; del.textContent="削除";
+      del.addEventListener("click", ()=>{ confirmDelId=s.id; render(); });
+      act.appendChild(del);
+    }
+    li.appendChild(chk); li.appendChild(body); li.appendChild(act);
+    list.appendChild(li);
+  });
+}
+
+let toastTimer;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+resetForm();
+render();
+init();
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+</body>
+</html>
